@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flow Dot Drawing</title>
+
+<style>
+    body {
+        margin: 0;
+        background: black;
+        overflow: hidden;
+        user-select: none;
+        touch-action: none;
+    }
+    canvas {
+        display: block;
+    }
+</style>
+</head>
+<body>
+
+<canvas id="canvas"></canvas>
+
+<script>
+/* ==========================================
+   Canvas 設定
+========================================== */
+const canvas = document.getElementById("canvas");
+const ctx = canvas.getContext("2d");
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+resize();
+window.addEventListener("resize", resize);
+
+/* ==========================================
+   Flow 丸ドローイング
+========================================== */
+let drawing = false;
+let dots = []; // {x,y,size,color,opacity,scale}
+
+/* ==========================================
+   ✅ 色パレット強化（原色＋蛍光＋パステル）
+========================================== */
+function randomColor() {
+    const colors = [
+        // 原色（追加）
+        "red", "blue", "yellow", "green",
+        "cyan", "magenta",
+
+        // 蛍光系
+        "deepskyblue", "aqua", "springgreen",
+        "chartreuse", "fuchsia",
+
+        // パステル系
+        "pink", "lightgreen", "lightskyblue",
+        "plum", "khaki",
+
+        // 白も保持
+        "white"
+    ];
+    return colors[Math.floor(Math.random() * colors.length)];
+}
+
+/* ==========================================
+   イベント処理
+========================================== */
+canvas.addEventListener("pointerdown", e => {
+    drawing = true;
+    addDot(e);
+});
+
+canvas.addEventListener("pointermove", e => {
+    if (drawing) addDot(e);
+});
+
+canvas.addEventListener("pointerup", () => drawing = false);
+
+/* ==========================================
+   丸を追加（連続した丸の軌跡）
+========================================== */
+function addDot(e) {
+    dots.push({
+        x: e.clientX,
+        y: e.clientY,
+        color: randomColor(),
+        size: 10,       // 初期丸サイズ
+        opacity: 1.0,
+        scale: 1.0      // 拡大しながら消える
+    });
+}
+
+/* ==========================================
+   描画ループ
+========================================== */
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    dots.forEach(dot => {
+        ctx.globalAlpha = dot.opacity;
+        ctx.fillStyle = dot.color;
+
+        ctx.beginPath();
+        ctx.arc(dot.x, dot.y, dot.size * dot.scale, 0, Math.PI * 2);
+        ctx.fill();
+
+        // 流れ星のように消える演出
+        dot.opacity *= 0.92;     // 徐々に薄く
+        dot.scale *= 1.05;       // 徐々に拡大
+    });
+
+    // 見えなくなったものを削除
+    dots = dots.filter(dot => dot.opacity > 0.03);
+
+    requestAnimationFrame(draw);
+}
+draw();
+
+</script>
+
+</body>
+</html>
